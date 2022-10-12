@@ -24,7 +24,7 @@ async function shortenUrl(req, res){
     }
 }
 
-async function getUrlById(req, res){
+async function getUrlById (req, res){
     const {id} = req.params
     const reg = /^\d+$/
 
@@ -75,8 +75,49 @@ async function getUrlByShortUrl (req, res){
 
 }
 
+async function deleteUrl (req, res){
+    const { userId } = res.locals.user
+    const {id} = req.params
+    const reg = /^\d+$/
+
+    if(!reg.test(id)){
+        return res.sendStatus(422)
+     }
+
+    try {
+        const isUserUrl = await connection.query(`
+        SELECT * FROM "usersUrls" WHERE id = $1
+        `, [id])
+
+        if(!isUserUrl.rows[0]){
+            return res.sendStatus(404)
+        }
+
+        if(isUserUrl.rows[0].userId !== userId){
+            return res.sendStatus(401)
+        }
+
+        await connection.query(`
+        DELETE FROM "visitCount" WHERE "urlId" = $1
+        `, [id])
+
+        await connection.query(`
+        DELETE FROM "usersUrls" WHERE id = $1
+        `, [id]) 
+
+        res.sendStatus(204)
+
+     } catch (error) {
+        console.log(error)
+        return res.sendStatus(500)
+     }
+
+
+}
+
 export{
     shortenUrl,
     getUrlById,
-    getUrlByShortUrl
+    getUrlByShortUrl,
+    deleteUrl
 }
