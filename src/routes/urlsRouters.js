@@ -6,5 +6,6 @@ const router = Router()
 
 router.post("/urls/shorten", validUser,urls.shortenUrl)
 router.get("/urls/:id", urls.getUrlById)
+router.get("/urls/open/:shortUrl", urls.getUrlByShortUrl)
 
 export default router

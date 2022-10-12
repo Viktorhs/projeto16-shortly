@@ -26,9 +26,10 @@ async function shortenUrl(req, res){
 
 async function getUrlById(req, res){
     const {id} = req.params
+    const reg = /^\d+$/
 
-    if(!id){
-        res.sendStatus(422)
+    if(!reg.test(id)){
+       return res.sendStatus(422)
     }
 
     try {
@@ -49,7 +50,33 @@ async function getUrlById(req, res){
     }
 }
 
+async function getUrlByShortUrl (req, res){
+    const {shortUrl} = req.params
+
+    try {
+        const url = await connection.query(`
+        SELECT * FROM "usersUrls" WHERE "shortUrl" = $1
+        `, [shortUrl])
+
+        if(!url.rows[0]){
+            return res.sendStatus(404)
+        }
+
+        await connection.query(`
+        INSERT INTO "visitCount" ("urlId") VALUES ($1)
+        `, [url.rows[0].id])
+
+        res.redirect(url.rows[0].url)
+
+    } catch (error) {
+        console.log(error)
+        return res.sendStatus(500)
+    }
+
+}
+
 export{
     shortenUrl,
-    getUrlById
+    getUrlById,
+    getUrlByShortUrl
 }
