@@ -5,20 +5,20 @@ async function validUser(req, res, next) {
     const token = authorization?.replace('Bearer ', '')
 
     if(!token){
-        return res.sendStatus(422)
+        return res.sendStatus(401)
     }
 
     try {
         
-        const user = connection.query(`
+        const user = await connection.query(`
         SELECT * FROM sessions WHERE token = $1
         `, [token])
 
-        if(!user){
+        if(!user.rows[0]){
             return res.sendStatus(401)
         }
 
-        res.locals.user = user
+        res.locals.user = user.rows[0]
         next()
 
     } catch (error) {
