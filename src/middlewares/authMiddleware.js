@@ -11,7 +11,11 @@ async function validUser(req, res, next) {
     try {
         
         const user = await connection.query(`
-        SELECT * FROM sessions WHERE token = $1
+        SELECT
+		    users.id AS "userId", users.name
+		    FROM sessions
+		    JOIN users ON users.id = sessions."userId"
+		    WHERE sessions.token = $1;
         `, [token])
 
         if(!user.rows[0]){

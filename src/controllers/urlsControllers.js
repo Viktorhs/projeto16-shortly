@@ -115,9 +115,46 @@ async function deleteUrl (req, res){
 
 }
 
+async function listUrlsUser (req, res){
+    const { userId, name } = res.locals.user
+
+    try {
+        
+        const userInf = await connection.query(`
+        SELECT 
+            u.id, u."shortUrl", u.url, COUNT(b."urlId") AS "visitCount"
+            FROM "usersUrls" u
+            JOIN "visitCount" b ON b."urlId" = u.id
+            WHERE u."userId" = $1
+            GROUP BY u.id;
+        `, [userId])
+
+        if(!userInf.rows[0]){
+            return res.sendStatus(404)
+        }
+
+        let sum = 0
+        userInf.rows.forEach((item) => {
+            sum += Number(item.visitCount)
+            item.visitCount = Number(item.visitCount)
+        })
+        
+        res.status(200).send({
+            id: userId,
+            name: name,
+            visitCount: sum,
+            shortenedUrls:userInf.rows})
+
+    } catch (error) {
+        console.log(error)
+        return res.sendStatus(500)
+    }
+}
+
 export{
     shortenUrl,
     getUrlById,
     getUrlByShortUrl,
-    deleteUrl
+    deleteUrl,
+    listUrlsUser
 }
