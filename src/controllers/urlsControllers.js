@@ -61,10 +61,10 @@ async function getUrlByShortUrl (req, res){
         if(!url.rows[0]){
             return res.sendStatus(404)
         }
-
+        const visit = Number(url.rows[0].visitCount) + 1;
         await connection.query(`
-        INSERT INTO "visitCount" ("urlId") VALUES ($1)
-        `, [url.rows[0].id])
+        UPDATE "usersUrls" SET "visitCount" = $1 WHERE id = $2
+        `, [visit, url.rows[0].id])
 
         res.redirect(url.rows[0].url)
 
@@ -98,10 +98,6 @@ async function deleteUrl (req, res){
         }
 
         await connection.query(`
-        DELETE FROM "visitCount" WHERE "urlId" = $1
-        `, [id])
-
-        await connection.query(`
         DELETE FROM "usersUrls" WHERE id = $1
         `, [id]) 
 
@@ -122,11 +118,10 @@ async function listUrlsUser (req, res){
         
         const userInf = await connection.query(`
         SELECT 
-            u.id, u."shortUrl", u.url, COUNT(b."urlId") AS "visitCount"
-            FROM "usersUrls" u
-            JOIN "visitCount" b ON b."urlId" = u.id
-            WHERE u."userId" = $1
-            GROUP BY u.id;
+            u.id, u."shortUrl", u.url, u."visitCount"
+        FROM "usersUrls" u
+        WHERE u."userId" = $1
+        ORDER BY u.id
         `, [userId])
 
         if(!userInf.rows[0]){
@@ -151,10 +146,34 @@ async function listUrlsUser (req, res){
     }
 }
 
+async function ranking (req, res){
+    try {
+        
+        const rankingList = await connection.query(`
+        SELECT 
+            users.id, 
+            users.name, 
+            COUNT(a."userId") AS "linksCount", 
+            COALESCE(SUM(a."visitCount"),0) AS "visitCounts"
+        FROM users
+        LEFT JOIN "usersUrls" a ON users.id = a."userId"
+        GROUP BY users.id
+        ORDER BY "visitCounts" DESC
+        LIMIT 10;
+        `)
+
+        res.send(rankingList.rows)
+    } catch (error) {
+        console.log(error)
+        return res.sendStatus(500)
+    }
+}
+
 export{
     shortenUrl,
     getUrlById,
     getUrlByShortUrl,
     deleteUrl,
-    listUrlsUser
+    listUrlsUser,
+    ranking
 }
