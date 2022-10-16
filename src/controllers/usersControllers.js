@@ -3,7 +3,7 @@ import bcrypt from "bcrypt"
 import { v4 as uuid } from 'uuid';
 import {userSignInSchema, userSignUpSchema} from "../schemas/authSchema.js"
 
-async function singUp(req, res) {
+async function signUp(req, res) {
     const {name, email, password, confirmPassword} = req.body
     const isValid = userSignUpSchema.validate({name, email, password, confirmPassword}, {abortEarly: false})
     if(isValid.error) {
@@ -83,6 +83,6 @@ async function signIn(req, res) {
 }
 
 export {
-    singUp,
+    signUp,
     signIn
 }

@@ -9,6 +9,6 @@ router.get("/urls/:id", urls.getUrlById)
 router.get("/urls/open/:shortUrl", urls.getUrlByShortUrl)
 router.delete("/urls/:id", validUser,urls.deleteUrl)
 router.get("/users/me", validUser, urls.listUrlsUser)
-router.get("/raking", urls.ranking)
+router.get("/ranking", urls.ranking)
 
 export default router
